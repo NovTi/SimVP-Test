@@ -1,3 +1,4 @@
+import pdb
 import numpy as np
 from skimage.metrics import structural_similarity as cal_ssim
 
@@ -52,8 +53,10 @@ def metric(pred, true, mean, std, metrics=['mae', 'mse'],
     Returns:
         dict: evaluation results
     """
-    pred = pred * std + mean
-    true = true * std + mean
+    pred = (pred * np.expand_dims(np.array(std), (0, 2, 3))) + np.expand_dims(np.array(mean), (0, 2, 3))
+    # pred = pred * np.array(std). + np.array(mean)
+    true = (true * np.expand_dims(np.array(std), (0, 2, 3))) + np.expand_dims(np.array(mean), (0, 2, 3))
+    # true = true * std + mean
     eval_res = {}
     eval_log = ""
     allowed_metrics = ['mae', 'mse', 'rmse', 'ssim', 'psnr',]

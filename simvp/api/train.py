@@ -1,5 +1,5 @@
 # Copyright (c) CAIRI AI Lab. All rights reserved
-
+import pdb
 import time
 import logging
 import json
@@ -86,7 +86,7 @@ class NonDistExperiment(object):
             print('Use CPU')
         return device
 
-    def _preparation(self):
+    def _preparation(self):  # load model, data
         # seed
         set_seed(self.args.seed)
         # log and checkpoint

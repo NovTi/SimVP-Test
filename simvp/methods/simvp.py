@@ -1,3 +1,4 @@
+import pdb
 import torch
 import torch.nn as nn
 import numpy as np
@@ -61,7 +62,9 @@ class SimVP(Base_method):
             runner.call_hook('before_train_iter')
             pred_y = self._predict(batch_x)
 
-            loss = self.criterion(pred_y, batch_y)
+            # only consider the last frame's prediction
+            loss1 = self.criterion(pred_y[:, :-1], batch_y[:, :-1]) * 0.2
+            loss = self.criterion(pred_y[:, -1], batch_y[:, -1]) + loss1
             loss.backward()
             self.model_optim.step()
             if not self.by_epoch:
@@ -88,10 +91,11 @@ class SimVP(Base_method):
             batch_x, batch_y = batch_x.to(self.device), batch_y.to(self.device)
             runner.call_hook('before_val_iter')
             pred_y = self._predict(batch_x)
-            loss = self.criterion(pred_y, batch_y)
+            # only consider the last frame
+            loss = self.criterion(pred_y[:, -1], batch_y[:, -1])
 
             list(map(lambda data, lst: lst.append(data.detach().cpu().numpy()
-                                                  ), [pred_y, batch_y], [preds_lst, trues_lst]))
+                                                  ), [pred_y[:, -1], batch_y[:, -1]], [preds_lst, trues_lst]))
             runner.call_hook('after_val_iter')
             if i * batch_x.shape[0] > 1000:
                 break

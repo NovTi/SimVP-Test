@@ -27,7 +27,8 @@ class SimVP_Model(nn.Module):
         model_type = 'gsta' if model_type is None else model_type.lower()
         if model_type == 'incepu':
             self.hid = MidIncepNet(T*hid_S, hid_T, N_T)
-        else:
+        else: 
+            # T: num of old frames, hid_S: hidden dimension
             self.hid = MidMetaNet(T*hid_S, hid_T, N_T,
                 input_resolution=(H, W), model_type=model_type,
                 mlp_ratio=mlp_ratio, drop=drop, drop_path=drop_path)
@@ -37,7 +38,7 @@ class SimVP_Model(nn.Module):
         x = x_raw.view(B*T, C, H, W)
 
         embed, skip = self.enc(x)
-        _, C_, H_, W_ = embed.shape
+        _, C_, H_, W_ = embed.shape  # C_: hid, H_, W_: downsampled h, w
 
         z = embed.view(B, T, C_, H_, W_)
         hid = self.hid(z)
