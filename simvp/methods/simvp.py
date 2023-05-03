@@ -49,15 +49,33 @@ class SimVP(Base_method):
             pred_y = torch.cat(pred_y, dim=1)
         return pred_y
 
+    def adjust_learning_rate(self, epoch):
+        """Decay the learning rate with half-cycle cosine after warmup"""
+        if epoch < self.args.warmup_epoch:
+            lr = self.args.lr * epoch / self.args.warmup_epoch 
+        else:
+            lr = self.args.min_lr + (self.args.lr - self.args.min_lr) * 0.5 * \
+                (1. + math.cos(math.pi * (epoch - self.args.warmup_epoch) / (self.args.epoch - self.args.warmup_epoch)))
+        for param_group in self.model_optim.param_groups:
+            if "lr_scale" in param_group:
+                param_group["lr"] = lr * param_group["lr_scale"]
+            else:
+                param_group["lr"] = lr
+        return
+
     def train_one_epoch(self, runner, train_loader, epoch, num_updates, loss_mean, **kwargs):
         losses_m = AverageMeter()
         self.model.train()
-        if self.by_epoch:
-            self.scheduler.step(epoch)
-
+        # if self.by_epoch:
+        #     self.scheduler.step(epoch)
+        self.model_optim.zero_grad()
+        it = 0
         train_pbar = tqdm(train_loader)
         for batch_x, batch_y in train_pbar:
-            self.model_optim.zero_grad()
+            # per iteration lr scheduler
+            if it % self.args.accum_iter == 0:
+                self.adjust_learning_rate(it / len(train_loader) + epoch)
+            # self.model_optim.zero_grad()
             batch_x, batch_y = batch_x.to(self.device), batch_y.to(self.device)
             runner.call_hook('before_train_iter')
             pred_y = self._predict(batch_x)
@@ -65,11 +83,15 @@ class SimVP(Base_method):
             # only consider the last frame's prediction
             loss1 = self.criterion(pred_y[:, :-1], batch_y[:, :-1]) * 0.2
             loss = self.criterion(pred_y[:, -1], batch_y[:, -1]) + loss1
-            loss.backward()
-            self.model_optim.step()
-            if not self.by_epoch:
-                self.scheduler.step()
+            if (it + 1) % self.args.accum_iter == 0:
+                loss.backward()
+                self.model_optim.step()
+                self.model_optim.zero_grad()
 
+            # self.model_optim.step()
+            # if not self.by_epoch:
+            #     self.scheduler.step()
+            it += 1
             num_updates += 1
             loss_mean += loss.item()
             losses_m.update(loss.item(), batch_x.size(0))

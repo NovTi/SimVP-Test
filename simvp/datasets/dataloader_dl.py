@@ -31,7 +31,7 @@ class DL(Dataset):
                 if (2000+i) not in broken_lst:
                     self.video_lst.append(f"video_{2000+i}")
 
-        self.resize = transforms.Resize((64, 64))
+        self.resize = transforms.Resize((128, 128))
         self.transform = transforms.Compose([
             Stack(p=0.0),
             transforms.ToTensor(),

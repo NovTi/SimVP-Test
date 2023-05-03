@@ -1,5 +1,5 @@
 # Copyright (c) CAIRI AI Lab. All rights reserved
-
+import pdb
 import os.path as osp
 import warnings
 warnings.filterwarnings('ignore')
@@ -26,6 +26,17 @@ if __name__ == '__main__':
         if args.config_file is None else args.config_file
     config = update_config(config, load_config(cfg_path),
                            exclude_keys=['method', 'batch_size', 'val_batch_size', 'sched'])
+
+    args.epoch = 130
+    args.opt_betas=(0.9, 0.95)
+    args.opt='adamw'
+    args.accum_iter=4
+    args.blr =  0.0008
+    args.min_lr = 1e-08
+    args.lr = 0.0015
+    args.warmup_epoch = 10
+    args.batch_size=2
+    args.val_batch_size= 2
 
     exp = NonDistExperiment(args)
     print('>'*35 + ' training ' + '<'*35)

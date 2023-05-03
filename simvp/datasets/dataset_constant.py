@@ -1,6 +1,6 @@
 dataset_parameters = {
     'dl':{
-        'in_shape': [11, 3, 96, 96],
+        'in_shape': [11, 3, 128, 128],
         'pre_seq_length': 11,
         'aft_seq_length': 11,
         'total_length': 22
